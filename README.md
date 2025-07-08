@@ -11,6 +11,7 @@ Install the following packages in the Web Layer:
 
 ```
 dotnet add package opentelemetry
+dotnet add package OpenTelemetry.Extensions.Hosting
 dotnet add package opentelemetry.instrumentation.process --prerelease
 dotnet add package opentelemetry.instrumentation.aspnetcore
 dotnet add package opentelemetry.instrumentation.http
