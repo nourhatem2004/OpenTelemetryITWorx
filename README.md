@@ -9,7 +9,7 @@
 
 Install the following packages in the Web Layer:
 
-```bash```
+```
 dotnet add package opentelemetry.instrumentation.process --prerelease
 dotnet add package opentelemetry.instrumentation.aspnetcore
 dotnet add package opentelemetry.instrumentation.http
