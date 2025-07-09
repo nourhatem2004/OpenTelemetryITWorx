@@ -437,6 +437,84 @@ If you want to stop or clean up Jaeger later:
 docker stop jaeger
 docker rm jaeger
 ```
+## 👉 Advanced: OpenTelemetry Middleware Setup for Distributed Tracing
+
+To enable **full distributed tracing** in your .NET 5 LMS microservices using OpenTelemetry and Jaeger, you need to:
+
+### 💪 Step 1: Middleware Configuration Explained
+
+OpenTelemetry uses *instrumentation libraries* and *middleware* to automatically generate telemetry data (called spans) for:
+
+* Incoming HTTP requests
+* Outgoing HTTP client calls
+* SQL commands and EF Core operations
+* Custom application events (via `ActivitySource`)
+
+These spans are collected and exported to Jaeger for visualization.
+
+---
+
+### 🛠️ Step 2: Modify `Startup.cs` to Use OpenTelemetry
+
+Ensure you add the OpenTelemetry services in `Startup.cs` like this:
+
+#### 🔧 `Startup.cs` → `ConfigureServices`
+
+```csharp
+public void ConfigureServices(IServiceCollection services)
+{
+    services.AddControllers();
+
+    // Add OpenTelemetry Tracing
+    services.AddOpenTelemetryLMS(Configuration);
+}
+```
+
+> `AddOpenTelemetryLMS` is the extension method in `OpenTelemetryConfiguration.cs`.
+
+---
+
+#### ⚙️ `Startup.cs` → `Configure`
+
+```csharp
+public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+{
+    if (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+
+    app.UseRouting();
+
+    app.UseAuthorization();
+
+    // Add middleware to auto-trace incoming HTTP requests
+    app.UseEndpoints(endpoints =>
+    {
+        endpoints.MapControllers();
+    });
+}
+```
+
+✅ The `AddAspNetCoreInstrumentation()` in your `OpenTelemetryConfiguration.cs` file automatically hooks into `UseRouting` and `UseEndpoints` to generate traces for each HTTP request.
+
+---
+
+### 🧠 Step 3: What Gets Traced Automatically
+
+With your current setup, OpenTelemetry captures:
+
+| Component         | Captured Automatically?                                    | Notes                                   |
+| ----------------- | ---------------------------------------------------------- | --------------------------------------- |
+| ASP.NET Core HTTP | ✅ Yes                                                      | Filters out `/health`, `/favicon`, etc. |
+| `HttpClient`      | ✅ Yes                                                      | Records exceptions by default           |
+| EF Core Queries   | ✅ With `EnrichWithIDbCommand`                              | Adds SQL as `db.statement`              |
+| ADO.NET/SqlClient | ✅ With `Enrich`                                            | Adds SQL command and command type       |
+| Custom Code       | ⚠️ You must call `ActivitySource.StartActivity()` manually |                                         |
+
+---
+
+
 
 
 
