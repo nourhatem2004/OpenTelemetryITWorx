@@ -570,7 +570,7 @@ In each microservice, register the handler and attach it to your `HttpClient`:
 ```csharp
 services.AddTransient<OpenTelemetryPropagationHandler>();
 
-services.AddHttpClient("TracingHttpClient")
+services.AddHttpClient()
         .AddHttpMessageHandler<OpenTelemetryPropagationHandler>();
 ```
 
@@ -578,33 +578,8 @@ services.AddHttpClient("TracingHttpClient")
 
 ---
 
-### ✅ Step 3: Use the Instrumented `HttpClient`
 
-Inject `IHttpClientFactory` and use the named client for internal service calls:
-
-```csharp
-public class EnrollmentServiceClient
-{
-    private readonly HttpClient _client;
-
-    public EnrollmentServiceClient(IHttpClientFactory factory)
-    {
-        _client = factory.CreateClient("TracingHttpClient");
-    }
-
-    public async Task EnrollAsync()
-    {
-        var response = await _client.GetAsync("http://lms.enrollment/api/enroll");
-        // handle response...
-    }
-}
-```
-
-> ✅ This ensures that trace IDs are propagated to the **receiving service**, which can then continue the trace.
-
----
-
-### ✅ Step 4: Ensure the Receiving Service is Also Instrumented
+### ✅ Step 3: Ensure the Receiving Service is Also Instrumented
 
 In each service **receiving** a request:
 
