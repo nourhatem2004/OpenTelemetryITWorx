@@ -516,9 +516,11 @@ With your current setup, OpenTelemetry captures:
 
 ## 🌐 Distributed Tracing Across Microservices
 
-When your application is composed of **multiple services** (e.g., LMS.Web.Core, LMS.EnrollmentService.API, LMS.NotificationsService), you can track requests across all of them by enabling **distributed tracing** using OpenTelemetry.
+When your application is composed of **multiple services** (e.g., `LMS.Web.Core`, `LMS.EnrollmentService.API`, `LMS.NotificationsService`), you can track requests across all of them by enabling **distributed tracing** using OpenTelemetry.
 
 This is done by **propagating trace context** (trace ID, span ID, etc.) across service boundaries using HTTP headers.
+
+---
 
 ### ✅ Step 1: Add `OpenTelemetryPropagationHandler.cs`
 
@@ -555,26 +557,32 @@ public class OpenTelemetryPropagationHandler : DelegatingHandler
         }
     }
 }
-This middleware ensures that all outgoing HTTP requests carry the current trace context.
+```
 
-✅ Step 2: Register the Handler in Startup.cs
-In each microservice, register the handler and attach it to your HttpClient:
+> 🧠 This middleware ensures that all **outgoing HTTP requests** carry the current trace context.
 
-csharp
-Copy
-Edit
+---
+
+### ✅ Step 2: Register the Handler in `Startup.cs`
+
+In each microservice, register the handler and attach it to your `HttpClient`:
+
+```csharp
 services.AddTransient<OpenTelemetryPropagationHandler>();
 
 services.AddHttpClient("TracingHttpClient")
         .AddHttpMessageHandler<OpenTelemetryPropagationHandler>();
-You can also register it globally using .AddHttpClient() if you're not using named clients.
+```
 
-✅ Step 3: Use the Instrumented HttpClient
-Inject IHttpClientFactory and use the named client for internal service calls:
+> ✅ You can also register it globally using `.AddHttpClient()` if you're not using named clients.
 
-csharp
-Copy
-Edit
+---
+
+### ✅ Step 3: Use the Instrumented `HttpClient`
+
+Inject `IHttpClientFactory` and use the named client for internal service calls:
+
+```csharp
 public class EnrollmentServiceClient
 {
     private readonly HttpClient _client;
@@ -590,42 +598,43 @@ public class EnrollmentServiceClient
         // handle response...
     }
 }
-This ensures that trace IDs are propagated to the receiving service, which can continue the trace.
+```
 
-✅ Step 4: Ensure the Receiving Service is Also Instrumented
-In each service receiving a request:
+> ✅ This ensures that trace IDs are propagated to the **receiving service**, which can then continue the trace.
 
-Ensure you have AddAspNetCoreInstrumentation() in your OpenTelemetryConfiguration.cs
+---
 
-This will extract the trace headers and continue the trace.
+### ✅ Step 4: Ensure the Receiving Service is Also Instrumented
 
-🔍 What You’ll See in Jaeger
-✅ A single trace spanning multiple services
+In each service **receiving** a request:
 
-✅ Each service’s spans appear as child spans of the original trace
+- Make sure `AddAspNetCoreInstrumentation()` is added in your `OpenTelemetryConfiguration.cs`
+- This will **extract trace headers** from the incoming request and **continue the trace** from where the previous service left off.
 
-✅ Cross-service latency is visible
+---
 
-✅ Exceptions are visible across the full call chain
+## 🔍 What You’ll See in Jaeger
 
-📎 Summary Checklist for Each Microservice
- Install OpenTelemetry NuGet packages
+- ✅ A **single trace** spanning multiple services  
+- ✅ Each service’s spans appear as **child spans** of the original trace  
+- ✅ **Cross-service latency** is visible  
+- ✅ **Exceptions** are visible across the full call chain  
 
- Add OpenTelemetryConfiguration.cs and configure tracing
+---
 
- Add OpenTelemetryPropagationHandler.cs
+## 📎 Summary Checklist for Each Microservice
 
- Register and use OpenTelemetryPropagationHandler with HttpClient
+- [x] Install OpenTelemetry NuGet packages  
+- [x] Add `OpenTelemetryConfiguration.cs` and configure tracing  
+- [x] Add `OpenTelemetryPropagationHandler.cs`  
+- [x] Register and use `OpenTelemetryPropagationHandler` with `HttpClient`  
+- [x] Ensure `appsettings.json` has a unique `"ServiceName"`  
+- [x] Ensure `AddAspNetCoreInstrumentation()` is called in OpenTelemetry setup  
+- [x] Verify Jaeger is running (`http://localhost:16686`)  
+- [x] Launch the service and inspect traces in Jaeger UI  
 
- Ensure your appsettings.json has a unique ServiceName
+---
 
- Verify Jaeger is running
-
- Launch the service and inspect traces in Jaeger UI
-
-yaml
-Copy
-Edit
 
 
 
